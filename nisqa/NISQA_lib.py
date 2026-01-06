@@ -138,8 +138,8 @@ class NISQA(nn.Module):
         x = self.cnn(x, n_wins)
         x, n_wins = self.time_dependency(x, n_wins)
         x, n_wins = self.time_dependency_2(x, n_wins)
-        x = self.pool(x, n_wins)
-        return x
+        x, e = self.pool(x, n_wins)
+        return x, e
     
 
 
@@ -258,14 +258,14 @@ class NISQA_DIM(nn.Module):
         return nn.ModuleList([copy.deepcopy(module) for i in range(N)])        
 
     def forward(self, x, n_wins):
-        
         x = self.cnn(x, n_wins)
         x, n_wins = self.time_dependency(x, n_wins)
         x, n_wins = self.time_dependency_2(x, n_wins)
-        out = [mod(x, n_wins) for mod in self.pool_layers]
-        out = torch.cat(out, dim=1)
-
-        return out
+        outs = [mod(x, n_wins) for mod in self.pool_layers]
+        true_out = [out[0] for out in outs]
+        final_embs = torch.stack([out[1] for out in outs], dim=1)
+        true_out = torch.cat(true_out, dim=1)
+        return true_out, final_embs
 
 
     
@@ -419,7 +419,7 @@ class NISQA_DE(nn.Module):
         
         x, n_wins_x = self.time_dependency_2(x, n_wins_x)
         
-        x = self.pool(x, n_wins_x)
+        x, e = self.pool(x, n_wins_x)
         
         return x
     
@@ -1111,8 +1111,8 @@ class PoolLastStepBi(nn.Module):
             x[:,0,1,:]),
             dim=1
             )
-        x = self.linear(x)
-        return x    
+        y = self.linear(x)
+        return y, x    
     
 class PoolLastStep(nn.Module):
     '''
@@ -1125,8 +1125,8 @@ class PoolLastStep(nn.Module):
         
     def forward(self, x, n_wins=None):    
         x = x[torch.arange(x.shape[0]), n_wins.type(torch.long)-1]
-        x = self.linear(x)
-        return x        
+        y = self.linear(x)
+        return y, x        
 
 class PoolAtt(torch.nn.Module):
     '''
@@ -1149,9 +1149,9 @@ class PoolAtt(torch.nn.Module):
         x = torch.bmm(att, x) 
         x = x.squeeze(1)
         
-        x = self.linear2(x)
+        y = self.linear2(x)
             
-        return x
+        return y, x
     
 class PoolAttFF(torch.nn.Module):
     '''
@@ -1178,9 +1178,9 @@ class PoolAttFF(torch.nn.Module):
         x = torch.bmm(att, x) 
         x = x.squeeze(1)
         
-        x = self.linear3(x)
+        y = self.linear3(x)
         
-        return x    
+        return y, x
 
 class PoolAvg(torch.nn.Module):
     '''
@@ -1199,9 +1199,9 @@ class PoolAvg(torch.nn.Module):
 
         x = torch.div(x.sum(1), n_wins.unsqueeze(1))   
             
-        x = self.linear(x)
+        y = self.linear(x)
         
-        return x
+        return y, x
     
 class PoolMax(torch.nn.Module):
     '''
@@ -1220,9 +1220,9 @@ class PoolMax(torch.nn.Module):
 
         x = x.max(1)[0]
         
-        x = self.linear(x)
+        y = self.linear(x)
             
-        return x    
+        return y, x 
     
 #%% Alignment
 class Alignment(torch.nn.Module):
@@ -1430,6 +1430,15 @@ def predict_mos(model, ds, bs, dev, num_workers=0):
                     num_workers=num_workers)
     model.to(dev)
     model.eval()
+
+    if len(dl) == 1:
+        xb, yb, (idx, n_wins) = next(iter(dl))
+        with torch.no_grad():
+            y_hat, emb = model(xb.to(dev), n_wins.to(dev))
+        y_hat = y_hat[0].cpu().numpy()
+        emb = emb[0].cpu().numpy()
+        return y_hat, emb
+    
     with torch.no_grad():
         y_hat_list = [ [model(xb.to(dev), n_wins.to(dev)).cpu().numpy(), yb.cpu().numpy()] for xb, yb, (idx, n_wins) in dl]
     yy = np.concatenate( y_hat_list, axis=1 )
@@ -1451,10 +1460,18 @@ def predict_dim(model, ds, bs, dev, num_workers=0):
                     num_workers=num_workers)
     model.to(dev)
     model.eval()
+    if len(dl) == 1:
+        xb, yb, (idx, n_wins) = next(iter(dl))
+        with torch.no_grad():
+            y_hat, emb = model(xb.to(dev), n_wins.to(dev))
+        y_hat = y_hat[0].cpu().numpy()
+        emb = emb[0].cpu().numpy()
+        return y_hat.tolist(), emb
+    
     with torch.no_grad():
         y_hat_list = [ [model(xb.to(dev), n_wins.to(dev)).cpu().numpy(), yb.cpu().numpy()] for xb, yb, (idx, n_wins) in dl]
+
     yy = np.concatenate( y_hat_list, axis=1 )
-    
     y_hat = yy[0,:,:]
     y = yy[1,:,:]
     

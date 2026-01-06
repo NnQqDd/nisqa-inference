@@ -1,0 +1,24 @@
+# --- Core ---
+torch
+torchvision
+torchaudio
+
+# --- Audio ---
+librosa
+soundfile
+
+# --- Scientific stack ---
+numpy
+scipy
+numba
+pandas
+scikit-learn
+
+# --- Visualization ---
+matplotlib
+seaborn
+
+# --- Utils ---
+pillow
+pyyaml
+tqdm
