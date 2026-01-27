@@ -23,10 +23,11 @@ if __name__ == "__main__":
     args['tr_bs_val'] = args['tr_num_workers'] = args['ms_channel'] = 1
     args['ms_sr'] = None
 
-        
+    # PATH = "/home/duyn/ActableDuy/voice-synthesis/voice-clone-audios"
+    PATH = "/home/duyn/ActableDuy/voice-synthesis/voice-conversion-audios"
     nisqa = nisqaModel(args)
-    os.makedirs("mos_embeddings", exist_ok=True)
-    audio_paths = list_audio_files("/home/duyn/ActableDuy/voice-synthesis/synthetic-audios")
+    os.makedirs(f"{PATH.split('/')[-1]}-mos-embeddings", exist_ok=True)
+    audio_paths = list_audio_files(PATH)
     for audio_path in tqdm(audio_paths):
         nisqa.args['deg'] = audio_path
         nisqa._loadDatasetsFile()
@@ -35,6 +36,8 @@ if __name__ == "__main__":
             "embedding": embedding.cpu(),
             "score": pred.item(),
         }
-        torch.save(result, f"mos_embeddings/{os.path.basename(audio_path)}.pt")
+        torch.save(result, 
+            f"{PATH.split('/')[-1]}-mos-embeddings/{os.path.splitext(os.path.basename(audio_path))[0]}.pt"
+        )
     
         
