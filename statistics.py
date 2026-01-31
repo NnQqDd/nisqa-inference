@@ -16,7 +16,7 @@ def list_pt_files(directory):
 
 
 if __name__ == "__main__":
-    DIRECTORY = "tts_embeddings"
+    DIRECTORY = "voice-clone-audios-mos-embeddings"
     pt_files = list_pt_files(DIRECTORY)
     model_stat_dict = {} 
     

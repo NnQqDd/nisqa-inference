@@ -28,6 +28,10 @@ if __name__ == "__main__":
     nisqa = nisqaModel(args)
     os.makedirs(f"{PATH.split('/')[-1]}-mos-embeddings", exist_ok=True)
     audio_paths = list_audio_files(PATH)
+    select_names = {
+        "ppg_vc", "bilstm_vc"
+    }
+    audio_paths = [audio_path for audio_path in audio_paths if os.path.basename(audio_path).split("-")[0] in select_names]
     for audio_path in tqdm(audio_paths):
         nisqa.args['deg'] = audio_path
         nisqa._loadDatasetsFile()
