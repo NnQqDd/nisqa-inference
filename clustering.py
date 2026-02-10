@@ -19,18 +19,16 @@ def list_pt_files(directory):
 
 
 if __name__ == "__main__":
-    DIRECTORY = "voice-conversion-audios-mos-embeddings"
+    DIRECTORY = "voice-clone-audios-mos-embeddings"
     pt_files = list_pt_files(DIRECTORY)
     model_stat_dict = {} 
     
     reference = []
     embeddings = []
     model_names = set()
-    except_names = {
-        "tortoise_tts_fast", "tortoise_tts_ultra_fast", 'f5tts_v1_base_16', 'f5tts_v1_base_64', 'e2tts_base_16', 'e2tts_base_64'
-    }
+    except_names = {}
     for pt_file in pt_files:
-        model_name = "".join(os.path.basename(pt_file).split("-")[:-1])
+        model_name = os.path.basename(os.path.dirname(pt_file))
         if model_name in except_names:
             continue
         model_names.add(model_name)
@@ -57,6 +55,6 @@ if __name__ == "__main__":
     precision = bcubed.precision(hypothesis, reference)
     recall = bcubed.recall(hypothesis, reference)
     f1 = bcubed.fscore(precision, recall)
-    print(f"Precision: {precision}")
-    print(f"Recall: {recall}")
-    print(f"F1: {f1}")
+    print(f"Precision: {precision:.3f}")
+    print(f"Recall   : {recall:.3f}")
+    print(f"F1       : {f1:.3f}")

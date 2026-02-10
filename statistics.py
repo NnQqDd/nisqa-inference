@@ -21,7 +21,7 @@ if __name__ == "__main__":
     model_stat_dict = {} 
     
     for pt_file in pt_files:
-        model_name = "".join(os.path.basename(pt_file).split("-")[:-1])
+        model_name = os.path.basename(os.path.dirname(pt_file))
         if model_name not in model_stat_dict:
             model_stat_dict[model_name] =     {
                 "n_embeddings": 0,
