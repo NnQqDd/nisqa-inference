@@ -18,7 +18,7 @@ def list_audio_files(directory):
 
 if __name__ == "__main__":
     args = dict()
-    args['pretrained_model'] = './weights/nisqa_mos_only.tar'
+    args['pretrained_model'] = './weights/nisqa.tar'
     args['deg'] = args['output_dir'] = ''
     args['mode'] = 'predict_file'
     args['tr_bs_val'] = args['tr_num_workers'] = args['ms_channel'] = 1
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # PATH = "/home/duyn/ActableDuy/voice-synthesis/voice-clone-audios"
     PATH = "/home/duyn/ActableDuy/voice-synthesis/voice-conversion-audios"
     nisqa = nisqaModel(args)
-    os.makedirs(f"{PATH.split('/')[-1]}-mos-embeddings", exist_ok=True)
+    os.makedirs(f"{PATH.split('/')[-1]}-metrics-embeddings", exist_ok=True)
     audio_paths = list_audio_files(PATH)
     ignore_names = {}
     audio_paths = [audio_path for audio_path in audio_paths if os.path.basename(os.path.dirname(audio_path)) not in ignore_names]
@@ -37,13 +37,13 @@ if __name__ == "__main__":
         pred, embedding = nisqa.predict()
         result = {
             "embedding": embedding.cpu(),
-            "score": pred.item(),
+            "score": pred[0],
         }
         name = os.path.basename(audio_path).split(".")[0] + ".pt"
         dirname = os.path.basename(os.path.dirname(audio_path))
-        os.makedirs(f"{PATH.split('/')[-1]}-mos-embeddings/{dirname}", exist_ok=True)
+        os.makedirs(f"{PATH.split('/')[-1]}-metrics-embeddings/{dirname}", exist_ok=True)
         torch.save(result, 
-            f"{PATH.split('/')[-1]}-mos-embeddings/{dirname}/{name}"
+            f"{PATH.split('/')[-1]}-metrics-embeddings/{dirname}/{name}"
         )
     
         
