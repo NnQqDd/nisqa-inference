@@ -29,9 +29,13 @@ if __name__ == "__main__":
     nisqa = nisqaModel(args)
     os.makedirs(f"{PATH.split('/')[-1]}-metrics-embeddings", exist_ok=True)
     audio_paths = list_audio_files(PATH)
-    ignore_names = {}
+    ignore_names = {"avc", "bilstm_vc", "dddm_vc", "free_vc", "knn_vc", "ppg_vc", "quick_vc", "seed_vc", "vqmivc_vc"}
     audio_paths = [audio_path for audio_path in audio_paths if os.path.basename(os.path.dirname(audio_path)) not in ignore_names]
     for audio_path in tqdm(audio_paths):
+        name = os.path.basename(audio_path).split(".")[0] + ".pt"
+        dirname = os.path.basename(os.path.dirname(audio_path))
+        if os.path.exists(f"{PATH.split('/')[-1]}-metrics-embeddings/{dirname}/{name}"):
+            continue
         nisqa.args['deg'] = audio_path
         nisqa._loadDatasetsFile()
         pred, embedding = nisqa.predict()
@@ -39,8 +43,6 @@ if __name__ == "__main__":
             "embedding": embedding.cpu(),
             "score": pred[0],
         }
-        name = os.path.basename(audio_path).split(".")[0] + ".pt"
-        dirname = os.path.basename(os.path.dirname(audio_path))
         os.makedirs(f"{PATH.split('/')[-1]}-metrics-embeddings/{dirname}", exist_ok=True)
         torch.save(result, 
             f"{PATH.split('/')[-1]}-metrics-embeddings/{dirname}/{name}"
